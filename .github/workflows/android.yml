@@ -8,6 +8,7 @@ on:
 
 env:
   ANDROID_ACCEPT_LICENSE: "yes"  # 自动接受 Android 许可证
+  ANDROID_BUILD_TOOLS_VERSION: "33.0.1"  # 指定稳定版本的 Build-Tools
 
 jobs:
   build:
@@ -29,7 +30,6 @@ jobs:
           ~/.buildozer
           ~/.android
           ~/.gradle
-          .buildozer
         key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
         restore-keys: |
           ${{ runner.os }}-buildozer-
@@ -38,42 +38,31 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y git zip unzip openjdk-8-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake
+        # 安装 Android 相关工具依赖
+        sudo apt-get install -y android-sdk-platform-tools
 
     - name: Install Python dependencies
       run: |
         pip3 install --upgrade pip
-        # 使用存在的 python-for-android 版本（2023.9.16 是 2023 年最新可用版本）
-        pip3 install buildozer==1.5.0 python-for-android==2023.9.16 cython virtualenv
+        pip3 install buildozer cython virtualenv
 
-    - name: Initialize Buildozer and install dependencies
+    - name: Initialize Buildozer and install SDK components
       run: |
-        # 手动创建必要目录
-        mkdir -p .buildozer/android/platform
-        # 克隆 python-for-android 仓库作为备选
-        git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
-        # 安装仓库内的依赖
-        cd .buildozer/android/platform/python-for-android
-        pip3 install -e .
-        cd ../../../../../
-        # 初始化 Buildozer 配置
-        buildozer init
-        # 更新 Buildozer 依赖
+        # 初始化 Buildozer 并触发依赖下载
         buildozer android update
-
-    - name: Accept Android licenses
-      run: |
-        mkdir -p ~/.android
-        touch ~/.android/repositories.cfg
-        # 动态查找 sdkmanager 路径
+        # 查找 sdkmanager 路径
         SDKMANAGER=$(find ~/.buildozer -name sdkmanager | grep 'tools/bin/sdkmanager' | head -n 1)
         if [ -z "$SDKMANAGER" ]; then
-          echo "Error: sdkmanager not found in Buildozer path"
+          echo "Error: sdkmanager not found"
           exit 1
         fi
+        # 强制接受所有许可证并安装指定版本的 Build-Tools
         yes | $SDKMANAGER --licenses
+        $SDKMANAGER "build-tools;${{ env.ANDROID_BUILD_TOOLS_VERSION }}" "platform-tools" "platforms;android-33"
 
     - name: Build with Buildozer
       run: |
+        # 指定 Build-Tools 版本构建
         buildozer android debug
         ls -la bin/
 
