@@ -1,0 +1,368 @@
+#:kivy 2.0.0
+
+<MainScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 20
+        
+        Label:
+            text: '校园签到系统'
+            font_size: 24
+            size_hint_y: 0.2
+        
+        Button:
+            text: '月卡玩家'
+            font_size: 20
+            on_release: app.root.current = 'monthly'
+        
+        Button:
+            text: '单次玩家'
+            font_size: 20
+            on_release: app.root.current = 'single'
+        
+        Button:
+            text: '测试签到'
+            font_size: 20
+            on_release: app.root.current = 'test'
+
+<MonthlyScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 20
+        
+        Label:
+            text: '月卡玩家'
+            font_size: 24
+            size_hint_y: 0.2
+        
+        Button:
+            text: '月卡玩家批量签到'
+            font_size: 20
+            on_release: app.root.current = 'monthly_sign'
+        
+        Button:
+            text: '月卡玩家管理'
+            font_size: 20
+            on_release: app.root.current = 'monthly_manage'
+        
+        Button:
+            text: '返回主菜单'
+            font_size: 20
+            on_release: app.root.current = 'main'
+
+<SingleScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 20
+        
+        Label:
+            text: '单次玩家'
+            font_size: 24
+            size_hint_y: 0.2
+        
+        Button:
+            text: '单次玩家批量签到'
+            font_size: 20
+            on_release: app.root.current = 'single_sign'
+        
+        Button:
+            text: '单次玩家管理'
+            font_size: 20
+            on_release: app.root.current = 'single_manage'
+        
+        Button:
+            text: '返回主菜单'
+            font_size: 20
+            on_release: app.root.current = 'main'
+
+<TestScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 20
+        
+        Label:
+            text: '测试签到'
+            font_size: 24
+            size_hint_y: 0.2
+        
+        Button:
+            text: '开始测试签到'
+            font_size: 20
+            on_release: app.root.current = 'test_sign'
+        
+        Button:
+            text: '返回主菜单'
+            font_size: 20
+            on_release: app.root.current = 'main'
+
+<MonthlySignScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+        
+        Label:
+            text: '月卡玩家批量签到'
+            font_size: 20
+            size_hint_y: 0.1
+        
+        Button:
+            text: '开始批量签到'
+            font_size: 18
+            size_hint_y: 0.1
+            on_release: root.start_sign_in()
+        
+        Label:
+            text: root.status_text
+            font_size: 16
+            size_hint_y: 0.1
+        
+        ScrollView:
+            TextInput:
+                text: root.log_text
+                font_size: 14
+                readonly: True
+                background_color: [0.95, 0.95, 0.95, 1]
+        
+        Button:
+            text: '返回月卡菜单'
+            font_size: 18
+            size_hint_y: 0.1
+            on_release: app.root.current = 'monthly'
+
+<MonthlyManageScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+        
+        Label:
+            text: '月卡用户管理'
+            font_size: 20
+            size_hint_y: 0.1
+        
+        ScrollView:
+            id: user_list
+            size_hint_y: 0.6
+        
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 0.1
+            spacing: 10
+            
+            Button:
+                text: '添加用户'
+                on_release: root.add_user()
+            
+            Button:
+                text: '编辑用户'
+                on_release: root.edit_user()
+            
+            Button:
+                text: '删除用户'
+                on_release: root.delete_user()
+        
+        Button:
+            text: '返回月卡菜单'
+            font_size: 18
+            size_hint_y: 0.1
+            on_release: app.root.current = 'monthly'
+
+<AddMonthlyUserPopup>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+        
+        Label:
+            text: '添加月卡用户'
+            font_size: 18
+        
+        TextInput:
+            id: username_input
+            hint_text: '用户名'
+            size_hint_y: 0.2
+        
+        TextInput:
+            id: user_id_input
+            hint_text: '学号'
+            size_hint_y: 0.2
+        
+        TextInput:
+            id: password_input
+            hint_text: '密码'
+            password: True
+            size_hint_y: 0.2
+        
+        TextInput:
+            id: stoptime_input
+            hint_text: '到期时间 (YYYY-MM-DD)'
+            size_hint_y: 0.2
+        
+        Button:
+            text: '添加'
+            size_hint_y: 0.2
+            on_release: root.add_user()
+
+<SingleSignScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+        
+        Label:
+            text: '单次玩家批量签到'
+            font_size: 20
+            size_hint_y: 0.1
+        
+        Label:
+            text: '请输入用户序号(每行一个):'
+            font_size: 16
+            size_hint_y: 0.1
+        
+        TextInput:
+            id: selected_indices_input
+            size_hint_y: 0.2
+        
+        Button:
+            text: '开始批量签到'
+            font_size: 18
+            size_hint_y: 0.1
+            on_release: root.start_sign_in()
+        
+        Label:
+            text: root.status_text
+            font_size: 16
+            size_hint_y: 0.1
+        
+        ScrollView:
+            TextInput:
+                text: root.log_text
+                font_size: 14
+                readonly: True
+                background_color: [0.95, 0.95, 0.95, 1]
+        
+        Button:
+            text: '返回单次菜单'
+            font_size: 18
+            size_hint_y: 0.1
+            on_release: app.root.current = 'single'
+
+<SingleManageScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+        
+        Label:
+            text: '单次用户管理'
+            font_size: 20
+            size_hint_y: 0.1
+        
+        ScrollView:
+            id: user_list
+            size_hint_y: 0.6
+        
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 0.1
+            spacing: 10
+            
+            Button:
+                text: '添加用户'
+                on_release: root.add_user()
+            
+            Button:
+                text: '编辑用户'
+                on_release: root.edit_user()
+            
+            Button:
+                text: '删除用户'
+                on_release: root.delete_user()
+        
+        Button:
+            text: '返回单次菜单'
+            font_size: 18
+            size_hint_y: 0.1
+            on_release: app.root.current = 'single'
+
+<AddSingleUserPopup>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+        
+        Label:
+            text: '添加单次用户'
+            font_size: 18
+        
+        TextInput:
+            id: username_input
+            hint_text: '用户名'
+            size_hint_y: 0.25
+        
+        TextInput:
+            id: user_id_input
+            hint_text: '学号'
+            size_hint_y: 0.25
+        
+        TextInput:
+            id: password_input
+            hint_text: '密码'
+            password: True
+            size_hint_y: 0.25
+        
+        Button:
+            text: '添加'
+            size_hint_y: 0.25
+            on_release: root.add_user()
+
+<TestSignScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+        
+        Label:
+            text: '测试签到'
+            font_size: 20
+            size_hint_y: 0.1
+        
+        TextInput:
+            id: username_input
+            hint_text: '学号'
+            size_hint_y: 0.1
+        
+        TextInput:
+            id: password_input
+            hint_text: '密码'
+            password: True
+            size_hint_y: 0.1
+        
+        Button:
+            text: '开始测试签到'
+            font_size: 18
+            size_hint_y: 0.1
+            on_release: root.start_sign_in()
+        
+        Label:
+            text: root.status_text
+            font_size: 16
+            size_hint_y: 0.1
+        
+        ScrollView:
+            TextInput:
+                text: root.log_text
+                font_size: 14
+                readonly: True
+                background_color: [0.95, 0.95, 0.95, 1]
+        
+        Button:
+            text: '返回测试菜单'
+            font_size: 18
+            size_hint_y: 0.1
+            on_release: app.root.current = 'test'
