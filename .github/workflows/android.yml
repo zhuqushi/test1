@@ -43,11 +43,17 @@ jobs:
         pip3 install --upgrade pip
         pip3 install buildozer cython virtualenv
 
+    - name: Initialize Buildozer (download SDK)
+      run: |
+        # 初始化 Buildozer 并下载 Android SDK 依赖
+        buildozer android clean
+        buildozer android requirements
+
     - name: Accept Android licenses
       run: |
         mkdir -p ~/.android
         touch ~/.android/repositories.cfg
-        # 动态查找 sdkmanager 路径（适配不同环境）
+        # 动态查找 sdkmanager 路径
         SDKMANAGER=$(find ~/.buildozer -name sdkmanager | grep 'tools/bin/sdkmanager' | head -n 1)
         if [ -z "$SDKMANAGER" ]; then
           echo "Error: sdkmanager not found in Buildozer path"
