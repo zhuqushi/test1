@@ -15,7 +15,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4  # 更新到最新版本
+      uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -42,6 +42,12 @@ jobs:
       run: |
         pip3 install --upgrade pip
         pip3 install buildozer cython virtualenv
+
+    - name: Accept Android licenses
+      run: |
+        mkdir -p ~/.android
+        touch ~/.android/repositories.cfg
+        yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses
 
     - name: Build with Buildozer
       run: |
