@@ -8,8 +8,8 @@ on:
 
 env:
   ANDROID_ACCEPT_LICENSE: "yes"
-  ANDROID_BUILD_TOOLS_VERSION: "34.0.0"  # 使用更稳定且广泛支持的版本
-  ANDROID_PLATFORM_VERSION: "34"         # 匹配的Android平台版本
+  ANDROID_BUILD_TOOLS_VERSION: "34.0.0"  # 使用稳定版本
+  ANDROID_PLATFORM_VERSION: "33"         # 匹配的Android平台版本
 
 jobs:
   build:
@@ -61,15 +61,8 @@ jobs:
           exit 1
         fi
         
-        # 接受所有许可证（使用expect自动化交互）
-        sudo apt-get install -y expect
-        expect <<EOF
-spawn $SDKMANAGER --licenses
-expect {
-  "y/N" { send "y\r"; exp_continue }
-  eof
-}
-EOF
+        # 接受所有许可证
+        yes | $SDKMANAGER --licenses
         
         # 安装指定版本的Build-Tools和平台
         $SDKMANAGER "build-tools;${{ env.ANDROID_BUILD_TOOLS_VERSION }}" \
