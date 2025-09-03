@@ -4,11 +4,12 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:  # 添加手动触发选项
+  workflow_dispatch:  # 手动触发选项
 
 env:
-  ANDROID_ACCEPT_LICENSE: "yes"  # 自动接受 Android 许可证
-  ANDROID_BUILD_TOOLS_VERSION: "33.0.1"  # 指定稳定版本的 Build-Tools
+  ANDROID_ACCEPT_LICENSE: "yes"
+  ANDROID_BUILD_TOOLS_VERSION: "33.0.1"  # 明确指定稳定版本
+  ANDROID_PLATFORM_VERSION: "33"         # 匹配的Android平台版本
 
 jobs:
   build:
@@ -37,32 +38,41 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y git zip unzip openjdk-8-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake
-        # 安装 Android 相关工具依赖
-        sudo apt-get install -y android-sdk-platform-tools
+        sudo apt-get install -y git zip unzip openjdk-8-jdk python3-pip \
+          autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
+          libncursesw5-dev libtinfo6 cmake android-sdk-platform-tools
 
     - name: Install Python dependencies
       run: |
         pip3 install --upgrade pip
-        pip3 install buildozer cython virtualenv
+        pip3 install buildozer==1.5.0 cython virtualenv
+        # 确保python-for-android版本兼容
+        pip3 install python-for-android==2023.9.16
 
-    - name: Initialize Buildozer and install SDK components
+    - name: Initialize Buildozer and SDK
       run: |
-        # 初始化 Buildozer 并触发依赖下载
+        # 初始化并触发依赖下载
         buildozer android update
-        # 查找 sdkmanager 路径
+        
+        # 强制查找sdkmanager路径（兼容不同安装位置）
         SDKMANAGER=$(find ~/.buildozer -name sdkmanager | grep 'tools/bin/sdkmanager' | head -n 1)
         if [ -z "$SDKMANAGER" ]; then
           echo "Error: sdkmanager not found"
           exit 1
         fi
-        # 强制接受所有许可证并安装指定版本的 Build-Tools
+        
+        # 强制接受所有许可证（关键步骤）
         yes | $SDKMANAGER --licenses
-        $SDKMANAGER "build-tools;${{ env.ANDROID_BUILD_TOOLS_VERSION }}" "platform-tools" "platforms;android-33"
+        
+        # 安装指定版本的Build-Tools和平台（确保aidl存在）
+        $SDKMANAGER "build-tools;${{ env.ANDROID_BUILD_TOOLS_VERSION }}" \
+                    "platforms;android-${{ env.ANDROID_PLATFORM_VERSION }}" \
+                    "platform-tools"
 
     - name: Build with Buildozer
       run: |
-        # 指定 Build-Tools 版本构建
+        # 显式指定Build-Tools版本构建
+        export ANDROID_BUILD_TOOLS_VERSION=${{ env.ANDROID_BUILD_TOOLS_VERSION }}
         buildozer android debug
         ls -la bin/
 
