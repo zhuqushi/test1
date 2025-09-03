@@ -38,28 +38,26 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y git zip unzip openjdk-8-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake
-        # 安装 Android SDK 命令行工具（手动补充可能缺失的依赖）
-        sudo apt-get install -y android-sdk cmdtest
 
     - name: Install Python dependencies
       run: |
         pip3 install --upgrade pip
-        # 强制安装指定版本的 python-for-android 和 buildozer
-        pip3 install buildozer==1.5.0 python-for-android==2023.10.0 cython virtualenv
+        # 使用存在的 python-for-android 版本（2023.9.16 是 2023 年最新可用版本）
+        pip3 install buildozer==1.5.0 python-for-android==2023.9.16 cython virtualenv
 
-    - name: Initialize Buildozer and install python-for-android
+    - name: Initialize Buildozer and install dependencies
       run: |
         # 手动创建必要目录
         mkdir -p .buildozer/android/platform
-        # 克隆 python-for-android 仓库（解决自动安装失败问题）
+        # 克隆 python-for-android 仓库作为备选
         git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
-        # 安装 python-for-android 依赖
+        # 安装仓库内的依赖
         cd .buildozer/android/platform/python-for-android
         pip3 install -e .
         cd ../../../../../
         # 初始化 Buildozer 配置
         buildozer init
-        # 强制更新 Buildozer 依赖
+        # 更新 Buildozer 依赖
         buildozer android update
 
     - name: Accept Android licenses
