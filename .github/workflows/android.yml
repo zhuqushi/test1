@@ -47,7 +47,13 @@ jobs:
       run: |
         mkdir -p ~/.android
         touch ~/.android/repositories.cfg
-        yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses
+        # 动态查找 sdkmanager 路径（适配不同环境）
+        SDKMANAGER=$(find ~/.buildozer -name sdkmanager | grep 'tools/bin/sdkmanager' | head -n 1)
+        if [ -z "$SDKMANAGER" ]; then
+          echo "Error: sdkmanager not found in Buildozer path"
+          exit 1
+        fi
+        yes | $SDKMANAGER --licenses
 
     - name: Build with Buildozer
       run: |
