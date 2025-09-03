@@ -1,15 +1,10 @@
-name: Android Build
+name: Android Build with Docker
 
 on:
   push:
     tags:
       - 'v*'
   workflow_dispatch:  # 手动触发选项
-
-env:
-  ANDROID_ACCEPT_LICENSE: "yes"
-  ANDROID_BUILD_TOOLS_VERSION: "30.0.3"  # 使用更稳定且广泛支持的版本
-  ANDROID_PLATFORM_VERSION: "30"         # 匹配的Android平台版本
 
 jobs:
   build:
@@ -19,81 +14,25 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.8'
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
 
-    - name: Cache Buildozer dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.buildozer
-          ~/.android
-          ~/.gradle
-        key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
-        restore-keys: |
-          ${{ runner.os }}-buildozer-
-
-    - name: Install system dependencies
+    - name: Build with Buildozer Docker
       run: |
-        sudo apt-get update
-        sudo apt-get install -y git zip unzip openjdk-8-jdk python3-pip \
-          autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
-          libncursesw5-dev libtinfo6 cmake android-sdk-platform-tools
-
-    - name: Install Python dependencies
-      run: |
-        pip3 install --upgrade pip
-        pip3 install buildozer==1.5.0 cython virtualenv
-        pip3 install python-for-android==2023.9.16
-
-    - name: Initialize Buildozer and SDK
-      run: |
-        # 设置环境变量
-        export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-        export PATH=$ANDROID_SDK_ROOT/cmdline-tools/tools/bin:$PATH
-        export PATH=$ANDROID_SDK_ROOT/platform-tools:$PATH
+        # 创建必要的目录
+        mkdir -p ~/.buildozer
         
-        # 初始化Buildozer
-        buildozer android update
+        # 使用 Docker 运行 Buildozer
+        docker run --rm \
+          -v $(pwd):/src \
+          -v ~/.buildozer:/home/user/.buildozer \
+          -e P4A_RELEASE_KEYSTORE=/src/.keystore \
+          -e P4A_RELEASE_KEYSTORE_PASSWD=${{ secrets.KEYSTORE_PASS }} \
+          -e P4A_RELEASE_KEYALIAS_PASSWD=${{ secrets.KEYALIAS_PASS }} \
+          -e P4A_RELEASE_KEYALIAS=${{ secrets.KEYALIAS }} \
+          czaki/buildozer:latest android debug
         
-        # 确保sdkmanager可用
-        SDKMANAGER=$(find ~/.buildozer -name sdkmanager | head -n 1)
-        if [ -z "$SDKMANAGER" ]; then
-          echo "Error: sdkmanager not found"
-          exit 1
-        fi
-        
-        # 接受所有许可证
-        yes | $SDKMANAGER --licenses || true
-        
-        # 安装指定版本的Build-Tools和平台
-        $SDKMANAGER "build-tools;${{ env.ANDROID_BUILD_TOOLS_VERSION }}" \
-                    "platforms;android-${{ env.ANDROID_PLATFORM_VERSION }}" \
-                    "platform-tools" \
-                    "cmdline-tools;latest"
-        
-        # 验证安装
-        BUILD_TOOLS_PATH="$ANDROID_SDK_ROOT/build-tools/${{ env.ANDROID_BUILD_TOOLS_VERSION }}"
-        if [ -d "$BUILD_TOOLS_PATH" ]; then
-          echo "Build tools installed successfully at: $BUILD_TOOLS_PATH"
-          ls -la "$BUILD_TOOLS_PATH/"
-        else
-          echo "Error: Build tools not found at expected path"
-          exit 1
-        fi
-
-    - name: Build with Buildozer
-      run: |
-        # 设置环境变量
-        export ANDROID_SDK_ROOT=$HOME/.buildozer/android/platform/android-sdk
-        export ANDROID_NDK_HOME=$HOME/.buildozer/android/platform/android-ndk
-        export PATH=$ANDROID_SDK_ROOT/cmdline-tools/tools/bin:$PATH
-        export PATH=$ANDROID_SDK_ROOT/platform-tools:$PATH
-        
-        # 构建应用
-        buildozer android debug
+        # 检查构建结果
         ls -la bin/
 
     - name: Upload APK
