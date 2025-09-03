@@ -1,0 +1,37 @@
+name: Android Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git zip unzip openjdk-8-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake
+        pip3 install --upgrade pip
+        pip3 install buildozer cython virtualenv
+
+    - name: Build with Buildozer
+      run: |
+        buildozer android debug
+        ls -la bin/
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v2
+      with:
+        name: app
+        path: bin/*.apk
