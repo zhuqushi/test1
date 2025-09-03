@@ -29,6 +29,7 @@ jobs:
           ~/.buildozer
           ~/.android
           ~/.gradle
+          .buildozer
         key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
         restore-keys: |
           ${{ runner.os }}-buildozer-
@@ -37,17 +38,29 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y git zip unzip openjdk-8-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake
+        # 安装 Android SDK 命令行工具（手动补充可能缺失的依赖）
+        sudo apt-get install -y android-sdk cmdtest
 
     - name: Install Python dependencies
       run: |
         pip3 install --upgrade pip
-        pip3 install buildozer cython virtualenv
+        # 强制安装指定版本的 python-for-android 和 buildozer
+        pip3 install buildozer==1.5.0 python-for-android==2023.10.0 cython virtualenv
 
-    - name: Initialize Buildozer (download SDK)
+    - name: Initialize Buildozer and install python-for-android
       run: |
-        # 初始化 Buildozer 并下载 Android SDK 依赖
-        buildozer android clean
-        buildozer android requirements
+        # 手动创建必要目录
+        mkdir -p .buildozer/android/platform
+        # 克隆 python-for-android 仓库（解决自动安装失败问题）
+        git clone https://github.com/kivy/python-for-android.git .buildozer/android/platform/python-for-android
+        # 安装 python-for-android 依赖
+        cd .buildozer/android/platform/python-for-android
+        pip3 install -e .
+        cd ../../../../../
+        # 初始化 Buildozer 配置
+        buildozer init
+        # 强制更新 Buildozer 依赖
+        buildozer android update
 
     - name: Accept Android licenses
       run: |
