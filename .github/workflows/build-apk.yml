@@ -1,0 +1,75 @@
+name: Build Android APK
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # 安装指定版本Briefcase，确保目录结构稳定
+        pip install briefcase>=0.38.0 toga-android
+        # 安装项目依赖（含toga、requests等）
+        pip install -r <(grep -v '^#' <(echo "$(python -m briefcase inspect requirements)"))
+        # 验证依赖（确认关键包已安装）
+        pip list | grep -E "briefcase|toga|requests|pycryptodome"
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+    - name: Configure Android SDK
+      run: |
+        # 匹配pyproject.toml中的targetsdkversion=33
+        sdkmanager "platforms;android-33" "build-tools;33.0.2" "ndk;25.1.8937393"
+        echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/25.1.8937393" >> $GITHUB_ENV
+        # 验证SDK安装（避免因SDK缺失导致构建失败）
+        sdkmanager --list | grep -E "android-33|33.0.2|25.1.8937393"
+    - name: Build APK with Briefcase（显式指定APP+详细日志）
+      run: |
+        # 1. 彻底清除旧构建环境（避免残留冲突）
+        echo "=== 清除旧构建目录 ==="
+        rm -rf ./build/campus_sign_in/android ./dist ./android
+        echo "旧目录清除完成"
+
+        # 2. 创建构建环境（显式指定APP名称：campus_sign_in，对应pyproject.toml中的配置）
+        echo -e "\n=== 创建Android构建环境（指定APP：campus_sign_in） ==="
+        briefcase create android -a campus_sign_in -v  # -v：输出详细日志，便于排查错误
+
+        # 3. 构建APK（显式指定APP，确保构建目标正确）
+        echo -e "\n=== 构建APK（指定APP：campus_sign_in） ==="
+        briefcase build android -a campus_sign_in -v  # -v：查看构建细节，确认是否生成APK
+
+        # 4. 关键：探索真实目录结构（重点查看build/campus_sign_in/android，这是create步骤生成的目录）
+        echo -e "\n=== 探索 build/campus_sign_in/android 目录（核心构建目录） ==="
+        ls -R ./build/campus_sign_in/android 2>/dev/null || echo "该目录不存在"
+        
+        # 5. 探索可能的APK输出路径（覆盖所有可能的子目录）
+        echo -e "\n=== 全局搜索 app-debug.apk（直接定位文件） ==="
+        find ./build ./dist ./android -name "app-debug.apk" 2>/dev/null || echo "未找到app-debug.apk"
+        
+        # 6. 查看gradle构建日志（若APK未生成，可从日志定位错误）
+        echo -e "\n=== 查看gradle构建日志（前20行，确认是否有编译错误） ==="
+        cat ./build/campus_sign_in/android/gradle/build.log 2>/dev/null | head -20
+    - name: Upload APK artifact（修正路径前缀）
+      uses: actions/upload-artifact@v4
+      with:
+        name: campus-sign-in-apk
+        # 修正路径前缀：从 build/campus_sign_in/android 开始（匹配create步骤的目录）
+        path: |
+          # 路径1：Briefcase 标准输出（gradle项目的默认APK路径）
+          ./build/campus_sign_in/android/app/build/outputs/apk/debug/app-debug.apk
+          # 路径2：全局搜索到的可能路径（兼容不同gradle配置）
+          ./build/campus_sign_in/android/**/app-debug.apk
+          # 路径3：dist目录（部分版本打包后输出）
+          ./dist/android/CampusSignIn-0.1.0-debug.apk
+        # 若未找到文件，设为error并停止，避免无意义流程（此时需查看前一步的搜索日志）
+        if-no-files-found: error
