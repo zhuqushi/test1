@@ -1,0 +1,47 @@
+[tool.briefcase]
+project_name = "CampusSignIn"
+bundle = "com.example"
+version = "0.1.0"
+description = "校园签到系统"
+author = "Your Name"
+author_email = "your.email@example.com"
+url = "https://github.com/yourusername/yourrepository"
+
+[tool.briefcase.app.campus_sign_in]
+formal_name = "校园签到系统"
+description = "校园签到系统应用"
+icon = "src/campus_sign_in/resources/icon"  # 可选：如果有图标，放在这里
+sources = [
+    "src/campus_sign_in",  # 指向正确的包目录
+]
+entry_point = "campus_sign_in.main:SignInApp"  # 入口点：包.模块:类名
+
+# 新增 Android 依赖配置（消除警告）
+[tool.briefcase.app.campus_sign_in.android]
+orientation = "portrait"
+minsdkversion = "21"
+targetsdkversion = "33"
+build_gradle_dependencies = [
+    "androidx.appcompat:appcompat:1.0.2",
+    "androidx.constraintlayout:constraintlayout:1.1.3",
+    "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0",
+]
+
+[project]
+name = "campus_sign_in"
+version = "0.1.0"
+requirements-python = ">=3.8"
+license = { file = "LICENSE" }
+
+[project.requirements]
+toga = ">=0.31.0"
+requests = ">=2.31.0"
+pycryptodome = ">=3.20.0"
+yagmail = ">=0.15.293"
+python-dateutil = ">=2.8.2"
+asyncio = ">=3.4.3"
+
+[project.optional-dependencies]
+android = [
+    "toga-android>=0.31.0",
+]

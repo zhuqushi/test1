@@ -1,0 +1,5 @@
+requests
+toga
+pycryptodome
+yagmail
+python-dateutil
